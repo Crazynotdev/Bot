@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CRAZY MD</title>
+<script src="/socket.io/socket.io.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@600;700;800&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#060709;--sur:#0b0c11;--sur2:#0f1016;
+  --bd:rgba(255,255,255,0.06);--bd2:rgba(255,255,255,0.11);
+  --g:#07f07c;--glo:rgba(7,240,124,0.08);--gbr:rgba(7,240,124,0.22);
+  --am:#f0b429;--amlo:rgba(240,180,41,0.08);
+  --re:#f0462a;--relo:rgba(240,70,42,0.08);
+  --bl:#3b9eff;--bllo:rgba(59,158,255,0.08);
+  --mu:#393c4a;--mu2:#565968;--tx:#c8ccd8;--txb:#eef0f6;
+  --mono:'DM Mono',monospace;--head:'Syne',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{
+  min-height:100vh;background:var(--bg);color:var(--tx);
+  font-family:var(--mono);
+  display:flex;flex-direction:column;align-items:center;
+}
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;
+  background-image:
+    linear-gradient(var(--bd) 1px,transparent 1px),
+    linear-gradient(90deg,var(--bd) 1px,transparent 1px);
+  background-size:56px 56px;
+  mask-image:radial-gradient(ellipse 80% 60% at 50% 30%,#000 10%,transparent 100%);
+}
+body::after{
+  content:'';position:fixed;
+  width:640px;height:640px;border-radius:50%;
+  background:radial-gradient(circle,rgba(7,240,124,0.042) 0%,transparent 65%);
+  top:50%;left:50%;transform:translate(-50%,-60%);
+  pointer-events:none;
+}
+
+/* ── LAYOUT ─────────────────────────────────────────────── */
+.wrap{
+  position:relative;z-index:1;
+  width:100%;max-width:460px;
+  padding:52px 18px 80px;
+  display:flex;flex-direction:column;align-items:center;gap:18px;
+}
+
+/* ── HEADER ─────────────────────────────────────────────── */
+.hdr{text-align:center;animation:fu .5s ease both}
+.logo{display:inline-flex;align-items:center;gap:11px;margin-bottom:8px}
+.logo-box{
+  width:42px;height:42px;border-radius:11px;
+  background:var(--g);display:flex;align-items:center;justify-content:center;
+  font-size:22px;box-shadow:0 0 32px rgba(7,240,124,0.4),0 0 80px rgba(7,240,124,0.1);
+}
+.logo-name{font-family:var(--head);font-size:30px;font-weight:800;color:var(--txb);letter-spacing:-1px}
+.logo-name em{color:var(--g);font-style:normal;text-shadow:0 0 24px rgba(7,240,124,0.5)}
+.sub{font-size:11px;letter-spacing:3.5px;text-transform:uppercase;color:var(--mu2)}
+
+/* ── CARD ───────────────────────────────────────────────── */
+.card{
+  width:100%;background:var(--sur);
+  border:1px solid var(--bd);border-radius:20px;
+  overflow:hidden;animation:fu .55s .06s ease both;
+}
+.card-line{
+  height:2px;
+  background:linear-gradient(90deg,transparent,var(--g) 35%,rgba(7,240,124,0.3) 70%,transparent);
+}
+.card-body{padding:32px}
+
+/* ── STEPS ──────────────────────────────────────────────── */
+.step{display:none}
+.step.on{display:block;animation:si .3s cubic-bezier(.16,1,.3,1) both}
+@keyframes si{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ── LABELS ─────────────────────────────────────────────── */
+.pill{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:4px 12px;border-radius:20px;
+  font-size:9px;letter-spacing:2px;text-transform:uppercase;font-weight:500;
+  margin-bottom:22px;
+}
+.pill-green{background:var(--glo);color:var(--g);border:1px solid rgba(7,240,124,0.18)}
+.pill-amber{background:var(--amlo);color:var(--am);border:1px solid rgba(240,180,41,0.18)}
+.pill-dot{width:5px;height:5px;border-radius:50%}
+.pill-green .pill-dot{background:var(--g);animation:bk 1.6s infinite}
+.pill-amber .pill-dot{background:var(--am)}
+
+.ttl{font-family:var(--head);font-size:21px;font-weight:700;color:var(--txb);letter-spacing:-.3px;margin-bottom:6px}
+.desc{font-size:12px;color:var(--mu2);margin-bottom:26px;line-height:1.6}
+
+/* ── INPUT ──────────────────────────────────────────────── */
+.f-lbl{display:block;font-size:9px;letter-spacing:2.5px;text-transform:uppercase;color:var(--mu2);margin-bottom:8px}
+.f-row{position:relative;display:flex;align-items:center;margin-bottom:6px}
+.f-flag{position:absolute;left:14px;font-size:19px;pointer-events:none}
+.f-input{
+  width:100%;background:rgba(255,255,255,0.025);
+  border:1px solid var(--bd);border-radius:10px;
+  padding:14px 16px 14px 46px;
+  color:var(--txb);font-family:var(--mono);font-size:18px;letter-spacing:2px;
+  outline:none;transition:border-color .2s,box-shadow .2s;
+}
+.f-input:focus{border-color:rgba(7,240,124,.36);box-shadow:0 0 0 3px rgba(7,240,124,.05)}
+.f-input::placeholder{color:var(--mu);font-size:13px;letter-spacing:0}
+.f-hint{font-size:10px;color:var(--mu);line-height:1.5;margin-bottom:20px}
+
+/* ── BUTTON ─────────────────────────────────────────────── */
+.btn{
+  width:100%;padding:15px;border:none;border-radius:10px;
+  background:var(--g);color:#030f07;
+  font-family:var(--head);font-size:13px;font-weight:700;letter-spacing:.3px;
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  transition:all .18s;
+  box-shadow:0 0 28px rgba(7,240,124,0.22),0 4px 18px rgba(0,0,0,.35);
+  position:relative;overflow:hidden;
+}
+.btn::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(255,255,255,.12),transparent);
+  pointer-events:none;
+}
+.btn:hover{background:#0cf87f;box-shadow:0 0 42px rgba(7,240,124,.35),0 6px 24px rgba(0,0,0,.4);transform:translateY(-1px)}
+.btn:active{transform:none}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-ghost{
+  background:transparent;color:var(--mu2);
+  border:1px solid var(--bd);box-shadow:none;
+  font-family:var(--mono);font-size:11px;font-weight:400;
+  margin-top:10px;
+}
+.btn-ghost::before{display:none}
+.btn-ghost:hover{background:rgba(255,255,255,.02);color:var(--tx);border-color:var(--bd2);box-shadow:none;transform:none}
+
+.spin{
+  width:14px;height:14px;
+  border:2px solid rgba(3,15,7,.2);border-top-color:#030f07;
+  border-radius:50%;animation:rot .5s linear infinite;flex-shrink:0;
+}
+@keyframes rot{to{transform:rotate(360deg)}}
+
+/* ── CODE DISPLAY ───────────────────────────────────────── */
+.codebox{
+  background:var(--glo);border:1px solid rgba(7,240,124,.18);
+  border-radius:14px;padding:28px 20px;text-align:center;
+  margin-bottom:22px;position:relative;overflow:hidden;
+}
+.codebox::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(7,240,124,.6),transparent);
+}
+.code-lbl{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--mu2);margin-bottom:16px}
+.code-val{
+  font-family:var(--head);font-size:44px;font-weight:800;
+  color:var(--g);letter-spacing:16px;padding-left:16px;
+  text-shadow:0 0 44px rgba(7,240,124,.55);line-height:1;margin-bottom:18px;
+}
+.timer-row{display:flex;align-items:center;justify-content:center;gap:10px}
+.timer-track{flex:1;height:3px;background:rgba(7,240,124,.12);border-radius:2px;overflow:hidden}
+.timer-fill{height:100%;background:var(--g);border-radius:2px;width:100%;transition:width 1s linear,background .4s}
+.timer-num{font-size:11px;color:var(--am);font-weight:500;min-width:34px;text-align:right}
+
+/* ── INSTRUCTIONS ───────────────────────────────────────── */
+.instr{border:1px solid var(--bd);border-radius:10px;overflow:hidden;margin-bottom:6px}
+.instr-hdr{padding:9px 15px;background:rgba(255,255,255,.02);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--mu2);border-bottom:1px solid var(--bd)}
+.instr-row{display:flex;align-items:flex-start;gap:12px;padding:10px 15px;font-size:12px;color:var(--mu2);border-bottom:1px solid rgba(255,255,255,.03);line-height:1.5}
+.instr-row:last-child{border-bottom:none}
+.instr-n{
+  width:20px;height:20px;border-radius:50%;
+  background:var(--glo);color:var(--g);font-size:10px;font-weight:500;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;
+}
+
+/* ── SUCCESS ────────────────────────────────────────────── */
+.ok-wrap{text-align:center;padding:8px 0}
+.ok-circle{
+  width:72px;height:72px;margin:0 auto 20px;border-radius:50%;
+  background:var(--glo);border:1px solid rgba(7,240,124,.25);
+  display:flex;align-items:center;justify-content:center;font-size:32px;
+  box-shadow:0 0 36px rgba(7,240,124,.2);
+  animation:pop .4s cubic-bezier(.16,1,.3,1);
+}
+@keyframes pop{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}
+.ok-ttl{font-family:var(--head);font-size:24px;font-weight:800;color:var(--txb);margin-bottom:6px}
+.ok-sub{font-size:12px;color:var(--mu2);margin-bottom:8px}
+.ok-num{
+  display:inline-block;font-size:14px;color:var(--g);
+  background:var(--glo);border:1px solid rgba(7,240,124,.18);
+  border-radius:8px;padding:6px 18px;letter-spacing:1px;margin-bottom:28px;
+}
+
+/* ── SESSIONS ───────────────────────────────────────────── */
+.section{width:100%;animation:fu .6s .1s ease both}
+.sec-lbl{
+  display:flex;align-items:center;gap:12px;
+  font-size:9px;letter-spacing:2.5px;text-transform:uppercase;color:var(--mu);margin-bottom:12px;
+}
+.sec-lbl::after{content:'';flex:1;height:1px;background:var(--bd)}
+
+.empty{
+  background:var(--sur);border:1px dashed rgba(255,255,255,.05);
+  border-radius:12px;padding:30px 20px;text-align:center;
+}
+.empty-ico{font-size:26px;opacity:.2;margin-bottom:8px}
+.empty-txt{font-size:12px;color:var(--mu)}
+
+.sess-item{
+  background:var(--sur);border:1px solid var(--bd);border-radius:12px;
+  padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;
+  margin-bottom:8px;transition:border-color .18s,transform .18s;
+  animation:fu .22s ease both;
+}
+.sess-item:hover{border-color:var(--bd2);transform:translateY(-1px)}
+.sess-item:last-child{margin-bottom:0}
+.sess-num{font-size:15px;font-weight:500;color:var(--txb);letter-spacing:.5px;margin-bottom:3px}
+.sess-id{font-size:10px;color:var(--mu);letter-spacing:.3px}
+.sess-right{display:flex;align-items:center;gap:10px;flex-shrink:0}
+
+.badge{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:4px 10px;border-radius:20px;
+  font-size:9px;letter-spacing:1.5px;text-transform:uppercase;font-weight:500;white-space:nowrap;
+}
+.bdot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.b-conn{background:var(--glo);color:var(--g);border:1px solid rgba(7,240,124,.18)}
+.b-conn .bdot{background:var(--g);box-shadow:0 0 5px var(--g);animation:bk 2s infinite}
+.b-pend{background:var(--amlo);color:var(--am);border:1px solid rgba(240,180,41,.18)}
+.b-pend .bdot{background:var(--am)}
+.b-reco{background:var(--bllo);color:var(--bl);border:1px solid rgba(59,158,255,.18)}
+.b-reco .bdot{background:var(--bl);animation:bk 1s infinite}
+.b-disc{background:var(--relo);color:var(--re);border:1px solid rgba(240,70,42,.18)}
+.b-disc .bdot{background:var(--re)}
+
+.del{
+  width:30px;height:30px;border:1px solid var(--bd);border-radius:7px;
+  background:none;color:var(--mu);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .15s;flex-shrink:0;
+}
+.del:hover{border-color:rgba(240,70,42,.3);color:var(--re);background:var(--relo)}
+
+/* ── COMMANDS ───────────────────────────────────────────── */
+.cmds{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cmd{background:var(--sur);border:1px solid var(--bd);border-radius:10px;padding:12px 14px;transition:border-color .15s}
+.cmd:hover{border-color:rgba(7,240,124,.15)}
+.cmd-n{font-size:12px;font-weight:500;color:var(--g);margin-bottom:3px}
+.cmd-d{font-size:10px;color:var(--mu2)}
+
+/* ── TOAST ──────────────────────────────────────────────── */
+.toasts{position:fixed;bottom:22px;right:18px;z-index:999;display:flex;flex-direction:column;gap:7px;pointer-events:none}
+.toast{
+  background:var(--sur2);border:1px solid var(--bd);border-radius:10px;
+  padding:11px 15px;font-size:12px;font-weight:500;
+  display:flex;align-items:center;gap:9px;
+  min-width:220px;max-width:290px;
+  animation:ti .22s ease;
+  box-shadow:0 8px 28px rgba(0,0,0,.5);pointer-events:all;
+}
+@keyframes ti{from{opacity:0;transform:translateX(10px)}to{opacity:1;transform:none}}
+.t-ok  {border-left:3px solid var(--g)}
+.t-err {border-left:3px solid var(--re)}
+.t-wrn {border-left:3px solid var(--am)}
+
+/* ── ANIMATIONS ─────────────────────────────────────────── */
+@keyframes fu{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes bk{0%,100%{opacity:1}50%{opacity:.2}}
+@keyframes shk{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(7px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+.shake{animation:shk .35s ease}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HEADER -->
+  <div class="hdr">
+    <div class="logo">
+      <div class="logo-box">⚡</div>
+      <div class="logo-name">CRAZY <em>MD</em></div>
+    </div>
+    <div class="sub">WhatsApp Bot · Pairing Code</div>
+  </div>
+
+  <!-- CARD -->
+  <div class="card">
+    <div class="card-line"></div>
+    <div class="card-body">
+
+      <!-- STEP 1 -->
+      <div class="step on" id="s1">
+        <div class="pill pill-green"><span class="pill-dot"></span>Prêt</div>
+        <div class="ttl">Connecter un bot</div>
+        <div class="desc">Entrez votre numéro WhatsApp. Un code de jumelage sera généré instantanément par Baileys.</div>
+        <label class="f-lbl">Numéro WhatsApp</label>
+        <div class="f-row">
+          <span class="f-flag">📱</span>
+          <input class="f-input" id="phone" type="tel" placeholder="+33612345678" maxlength="20"
+            oninput="this.value=this.value.startsWith('+')?this.value:'+'+this.value.replace(/^\+/,'')"
+            onkeydown="if(event.key==='Enter')go()"/>
+        </div>
+        <div class="f-hint">Indicatif obligatoire · +33 France · +229 Bénin · +1 USA · +212 Maroc</div>
+        <button class="btn" id="gobtn" onclick="go()">
+          Générer le Pairing Code
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+      </div>
+
+      <!-- STEP 2 -->
+      <div class="step" id="s2">
+        <div class="pill pill-amber"><span class="pill-dot"></span>En attente</div>
+        <div class="ttl">Saisissez ce code</div>
+        <div class="desc">Ouvrez WhatsApp → Paramètres → Appareils connectés → Saisir le code.</div>
+        <div class="codebox">
+          <div class="code-lbl">Pairing Code · Valable 2 minutes</div>
+          <div class="code-val" id="cval">— — — —</div>
+          <div class="timer-row">
+            <div class="timer-track"><div class="timer-fill" id="tbar"></div></div>
+            <div class="timer-num" id="tnum">120s</div>
+          </div>
+        </div>
+        <div class="instr">
+          <div class="instr-hdr">Comment faire</div>
+          <div class="instr-row"><div class="instr-n">1</div><div>Ouvrez <strong>WhatsApp</strong> sur votre téléphone</div></div>
+          <div class="instr-row"><div class="instr-n">2</div><div>Allez dans <strong>Paramètres → Appareils connectés</strong></div></div>
+          <div class="instr-row"><div class="instr-n">3</div><div>Tapez <strong>« Associer un appareil »</strong></div></div>
+          <div class="instr-row"><div class="instr-n">4</div><div>Choisissez <strong>« Saisir le code »</strong> et entrez le code ci-dessus</div></div>
+        </div>
+        <button class="btn btn-ghost" onclick="reset()">← Changer de numéro</button>
+      </div>
+
+      <!-- STEP 3 -->
+      <div class="step" id="s3">
+        <div class="ok-wrap">
+          <div class="ok-circle">✅</div>
+          <div class="ok-ttl">Bot Connecté !</div>
+          <div class="ok-sub">Votre bot est opérationnel et en écoute.</div>
+          <div class="ok-num" id="oknum"></div>
+          <button class="btn" onclick="reset()">+ Connecter un autre bot</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SESSIONS -->
+  <div class="section">
+    <div class="sec-lbl">Bots actifs</div>
+    <div id="slist"><div class="empty"><div class="empty-ico">🤖</div><div class="empty-txt">Aucun bot connecté</div></div></div>
+  </div>
+
+  <!-- COMMANDS -->
+  <div class="section" style="animation-delay:.15s">
+    <div class="sec-lbl">Commandes</div>
+    <div class="cmds" id="cmds"></div>
+  </div>
+
+</div>
+<div class="toasts" id="toasts"></div>
+
+<script>
+// ── WS ───────────────────────────────────────────────────
+const io = window.io()
+io.on('sessions:update', render)
+io.on('bot:connected',  ({ number }) => { clearTimer(); document.getElementById('oknum').textContent = number; show('s3'); toast('ok','✅ '+number+' connecté !') })
+io.on('bot:disconnected', ({ number }) => toast('wrn','⚠️ '+number+' déconnecté'))
+
+// ── STATE ────────────────────────────────────────────────
+let timer = null
+const DUR = 120
+
+// ── GO ───────────────────────────────────────────────────
+async function go() {
+  const v = document.getElementById('phone').value.trim()
+  if (!v || !/^\+\d{7,15}$/.test(v)) {
+    const el = document.getElementById('phone')
+    el.classList.add('shake')
+    el.addEventListener('animationend', () => el.classList.remove('shake'), { once: true })
+    toast('err','❌ Numéro invalide · ex: +33612345678')
+    return
+  }
+  const btn = document.getElementById('gobtn')
+  btn.disabled = true
+  btn.innerHTML = '<span class="spin"></span> Connexion Baileys...'
+  try {
+    const r = await fetch('/api/pair', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ number: v }) })
+    const d = await r.json()
+    if (!d.ok) throw new Error(d.error)
+    document.getElementById('cval').textContent = d.code
+    show('s2'); startTimer()
+    toast('ok','🔑 Code généré !')
+  } catch (e) {
+    toast('err','❌ '+e.message)
+  }
+  btn.disabled = false
+  btn.innerHTML = 'Générer le Pairing Code <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>'
+}
+
+// ── TIMER ────────────────────────────────────────────────
+function startTimer() {
+  let n = DUR; clearTimer()
+  const bar = document.getElementById('tbar'), num = document.getElementById('tnum')
+  timer = setInterval(() => {
+    n--
+    bar.style.width = (n / DUR * 100) + '%'
+    num.textContent = n + 's'
+    if (n <= 20) bar.style.background = 'var(--re)'
+    else if (n <= 60) bar.style.background = 'var(--am)'
+    if (n <= 0) { clearTimer(); toast('wrn','⏳ Code expiré — recommencez'); reset() }
+  }, 1000)
+}
+function clearTimer() {
+  clearInterval(timer)
+  const b = document.getElementById('tbar'), t = document.getElementById('tnum')
+  if (b) { b.style.width = '100%'; b.style.background = 'var(--g)' }
+  if (t) t.textContent = DUR + 's'
+}
+
+// ── RESET ────────────────────────────────────────────────
+function reset() { clearTimer(); document.getElementById('phone').value = ''; show('s1') }
+
+// ── RENDER SESSIONS ──────────────────────────────────────
+function render(list) {
+  const w = document.getElementById('slist')
+  if (!list?.length) {
+    w.innerHTML = '<div class="empty"><div class="empty-ico">🤖</div><div class="empty-txt">Aucun bot connecté</div></div>'
+    return
+  }
+  const bmap = { connected:['b-conn','Connecté'], pending:['b-pend','En attente'], reconnecting:['b-reco','Reconnexion'], connecting:['b-reco','Connexion...'], disconnected:['b-disc','Déconnecté'] }
+  w.innerHTML = list.map((s, i) => {
+    const [bc, bl] = bmap[s.status] || ['b-disc', s.status]
+    const since = ago(s.lastSeen)
+    return `<div class="sess-item" style="animation-delay:${i*.05}s">
+      <div><div class="sess-num">${s.number}</div><div class="sess-id">${s.id} · vu ${since}</div></div>
+      <div class="sess-right">
+        <span class="badge ${bc}"><span class="bdot"></span>${bl}</span>
+        <button class="del" onclick="del('${s.id}')" title="Supprimer">
+          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+            <path d="M10 11v6M14 11v6"/>
+          </svg>
+        </button>
+      </div>
+    </div>`
+  }).join('')
+}
+
+async function del(id) {
+  if (!confirm('Supprimer ce bot ?')) return
+  await fetch('/api/session/'+id, { method:'DELETE' })
+  toast('ok','🗑 Supprimé')
+}
+
+function ago(d) {
+  const s = Math.floor((Date.now() - new Date(d)) / 1000)
+  if (s < 10) return "à l'instant"
+  if (s < 60) return s+'s'
+  if (s < 3600) return Math.floor(s/60)+'m'
+  return Math.floor(s/3600)+'h'
+}
+
+// ── UI ───────────────────────────────────────────────────
+function show(id) { document.querySelectorAll('.step').forEach(s => s.classList.remove('on')); document.getElementById(id).classList.add('on') }
+
+function toast(type, msg) {
+  const el = document.createElement('div')
+  el.className = 'toast t-'+type
+  el.textContent = msg
+  document.getElementById('toasts').appendChild(el)
+  setTimeout(() => { el.style.opacity='0'; el.style.transition='opacity .3s' }, 3800)
+  setTimeout(() => el.remove(), 4200)
+}
+
+// ── COMMANDS ─────────────────────────────────────────────
+const CMDS = [
+  ['!menu','Toutes les commandes'],['!ping','Test & latence'],
+  ['!info','Infos du bot (RAM, uptime)'],['!sticker','Créer un sticker'],
+  ['!meteo [ville]','Météo temps réel'],['!calc [expr]','Calculatrice'],
+  ['!blague','Blague aléatoire'],['!tagall','Tag tout le groupe'],
+  ['!kick @user','Exclure un membre'],['!pp','Photo de profil'],
+]
+document.getElementById('cmds').innerHTML = CMDS.map(([n,d]) =>
+  `<div class="cmd"><div class="cmd-n">${n}</div><div class="cmd-d">${d}</div></div>`
+).join('')
+</script>
+</body>
+</html>
