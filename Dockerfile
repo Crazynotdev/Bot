@@ -1,19 +1,12 @@
-FROM node:20-alpine
-
-# Dépendances système pour Baileys
-RUN apk add --no-cache \
-    python3 make g++ \
-    chromium \
-    nss freetype harfbuzz ca-certificates
+FROM node:20-slim
 
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm install --omit=dev
+RUN npm install --production --no-optional
 
 COPY . .
 
-# Dossier sessions persistant
 RUN mkdir -p sessions
 
 EXPOSE 3000
