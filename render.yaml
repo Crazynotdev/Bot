@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: crazy-md
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: PORT
+        value: 3000
+      - key: NODE_ENV
+        value: production
+    disk:
+      name: sessions
+      mountPath: /app/sessions
+      sizeGB: 1
