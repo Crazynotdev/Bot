@@ -46,7 +46,7 @@ class SessionManager {
         creds: state.creds,
         keys:  makeCacheableSignalKeyStore(state.keys, P({ level: 'silent' })),
       },
-      browser:             Browsers.macOS('Desktop'),
+      //browser:             Browsers.macOS('Desktop'),
       syncFullHistory:     false,
       markOnlineOnConnect: true,
       retryRequestDelayMs: 350,
