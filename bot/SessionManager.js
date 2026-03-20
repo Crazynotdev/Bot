@@ -1,4 +1,4 @@
-‘use strict’
+'use strict'
 
 // ╔═══════════════════════════════════════════════════════════╗
 // ║             CRAZY MD — Session Manager Pro                ║
