@@ -84,16 +84,17 @@ class SessionManager {
     })
 
     sock.ev.on('messages.upsert', async ({ messages, type }) => {
-      if (type !== 'notify') return
-      session.lastSeen = new Date()
-      this.sessions.set(id, session)
-      for (const msg of messages) {
-        if (msg.key.fromMe) continue
-        await handler(sock, msg).catch(console.error)
-      }
-    })
-
-    if (!state.creds.registered) {
+  console.log(`[MSG] type=${type} count=${messages.length}`)
+  if (type !== 'notify') return
+  session.lastSeen = new Date()
+  this.sessions.set(id, session)
+  for (const msg of messages) {
+    console.log(`[MSG] fromMe=${msg.key.fromMe} jid=${msg.key.remoteJid} text=${msg.message?.conversation || ''}`)
+    if (msg.key.fromMe) continue
+    await handler(sock, msg).catch(console.error)
+  }
+})
+      if (!state.creds.registered) {
       await new Promise(r => setTimeout(r, 2000))
       const code = await sock.requestPairingCode(number.replace(/\D/g, ''))
       session.status = 'pending'
