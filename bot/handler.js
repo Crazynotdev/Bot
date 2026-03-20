@@ -22,7 +22,7 @@ const CONFIG = {
 PREFIX:     ‘.’,
 BOT_NAME:   ‘CRAZY MD’,
 VERSION:    ‘v2.0’,
-OWNER_NUM:  ‘’,              // ex: ‘+33612345678’
+OWNER_NUM:  ‘24105730123’,              // ex: ‘+33612345678’
 ASSETS_DIR: path.join(__dirname, ‘..’, ‘assets’),
 }
 
